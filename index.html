@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A1628">
+<title>Affiliate Radar V2</title>
+<style>
+/* ══════════════════════════════════════════════════════════
+   TOKENS & RESET
+══════════════════════════════════════════════════════════ */
+:root {
+  --bg:          #0A1628;
+  --surface:     #111D33;
+  --surface2:    #18273F;
+  --border:      #1E3454;
+  --border2:     #243C60;
+  --primary:     #00C896;
+  --primary-dim: rgba(0,200,150,.14);
+  --blue:        #1A8FD1;
+  --text:        #DDE6F0;
+  --muted:       #4A6480;
+  --muted2:      #2E4A68;
+  --active:      #22C55E;
+  --watch:       #F59E0B;
+  --archive:     #64748B;
+  --danger:      #EF4444;
+  --warning:     #F59E0B;
+  --success:     #22C55E;
+  --r:           12px;
+  --r-sm:        8px;
+  --nav-h:       62px;
+  --header-h:    50px;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:14px; line-height:1.5; overflow:hidden; }
+a { color:var(--primary); text-decoration:none; }
+a:hover { text-decoration:underline; }
+button { font-family:inherit; }
+input,select,textarea { font-family:inherit; }
+::-webkit-scrollbar { width:3px; height:3px; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+/* ══════════════════════════════════════════════════════════
+   SCREENS
+══════════════════════════════════════════════════════════ */
+#app { height:100%; display:flex; flex-direction:column; }
+.screen { display:none; height:100%; flex-direction:column; overflow:hidden; }
+.screen.on { display:flex; }
+
+/* ══════════════════════════════════════════════════════════
+   SETUP SCREEN
+══════════════════════════════════════════════════════════ */
+#sc-setup { justify-content:center; align-items:center; padding:24px; }
+.setup-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:28px 22px; width:100%; max-width:420px;
+}
+.setup-logo { text-align:center; margin-bottom:24px; }
+.setup-logo .icon { font-size:44px; display:block; margin-bottom:8px; }
+.setup-logo h1 { font-size:22px; font-weight:800; color:var(--primary); letter-spacing:-.3px; }
+.setup-logo p { font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* ══════════════════════════════════════════════════════════
+   MAIN SCREEN STRUCTURE
+══════════════════════════════════════════════════════════ */
+#sc-main { flex-direction:column; }
+.app-header {
+  height:var(--header-h); min-height:var(--header-h);
+  background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 14px; flex-shrink:0; z-index:10;
+}
+.app-header .logo { display:flex; align-items:center; gap:7px; }
+.app-header .logo-icon { font-size:18px; }
+.app-header .logo-text { font-size:15px; font-weight:700; color:var(--primary); }
+.app-content { flex:1; overflow-y:auto; overflow-x:hidden;
+  padding-bottom:calc(var(--nav-h) + 8px); -webkit-overflow-scrolling:touch; }
+
+/* ══════════════════════════════════════════════════════════
+   VIEWS
+══════════════════════════════════════════════════════════ */
+.view { display:none; }
+.view.on { display:block; }
+
+/* ══════════════════════════════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════════════════════════════ */
+#bot-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  height:var(--nav-h); background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex; z-index:100;
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; cursor:pointer;
+  color:var(--muted); transition:color .18s;
+  -webkit-tap-highlight-color:transparent; position:relative;
+  user-select:none;
+}
+.nav-btn.on { color:var(--primary); }
+.nav-btn .ni { font-size:20px; line-height:1; }
+.nav-btn .nl { font-size:10px; font-weight:500; }
+.alert-dot {
+  position:absolute; top:8px; right:22%;
+  background:var(--danger); color:#fff;
+  font-size:9px; font-weight:700;
+  min-width:15px; height:15px; border-radius:8px;
+  display:none; align-items:center; justify-content:center; padding:0 3px;
+}
+.alert-dot.on { display:flex; }
+
+/* ══════════════════════════════════════════════════════════
+   FAB
+══════════════════════════════════════════════════════════ */
+#fab {
+  position:fixed; bottom:calc(var(--nav-h) + 14px); right:16px;
+  width:50px; height:50px; border-radius:25px;
+  background:var(--primary); color:#0A1628;
+  font-size:24px; font-weight:300; border:none; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,200,150,.4); z-index:50;
+  transition:transform .15s; -webkit-tap-highlight-color:transparent;
+}
+#fab:active { transform:scale(.9); }
+
+/* ══════════════════════════════════════════════════════════
+   FORMS
+══════════════════════════════════════════════════════════ */
+.fgrp { margin-bottom:14px; }
+label { display:block; font-size:11px; font-weight:600;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+input,select,textarea {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--r-sm); padding:10px 12px;
+  color:var(--text); font-size:14px; outline:none;
+  transition:border-color .15s; -webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus { border-color:var(--primary); }
+input::placeholder,textarea::placeholder { color:var(--muted); }
+select option { background:var(--surface2); }
+textarea { resize:vertical; min-height:80px; }
+.row2 { display:flex; gap:10px; }
+.row2 > .fgrp { flex:1; min-width:0; }
+
+/* ══════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════ */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:5px; padding:10px 16px; border-radius:var(--r-sm);
+  border:none; font-size:13px; font-weight:600; cursor:pointer;
+  transition:opacity .15s, transform .1s;
+  -webkit-tap-highlight-color:transparent; user-select:none;
+}
+.btn:active { transform:scale(.96); }
+.btn:disabled { opacity:.45; pointer-events:none; }
+.btn-p  { background:var(--primary); color:#0A1628; }
+.btn-s  { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-d  { background:transparent; color:var(--danger); border:1px solid var(--danger); }
+.btn-g  { background:transparent; color:var(--primary); padding:6px 10px; }
+.btn-sm { padding:6px 12px; font-size:12px; }
+.btn-w  { width:100%; }
+
+/* ══════════════════════════════════════════════════════════
+   CARDS
+══════════════════════════════════════════════════════════ */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════════════════ */
+.badge {
+  display:inline-flex; align-items:center;
+  padding:2px 8px; border-radius:20px;
+  font-size:11px; font-weight:600; white-space:nowrap;
+}
+.b-active   { background:rgba(34,197,94,.14);  color:#22C55E; }
+.b-watch    { background:rgba(245,158,11,.14); color:#F59E0B; }
+.b-archive  { background:rgba(100,116,139,.14);color:#64748B; }
+.b-high     { background:rgba(239,68,68,.14);  color:#EF4444; }
+.b-medium   { background:rgba(245,158,11,.14); color:#F59E0B; }
+.b-low      { background:rgba(34,197,94,.14);  color:#22C55E; }
+.b-primary  { background:var(--primary-dim);   color:var(--primary); }
+.b-muted    { background:rgba(74,100,128,.18); color:var(--muted); }
+
+/* ══════════════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════════════ */
+.tabs {
+  display:flex; background:var(--surface);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  flex-shrink:0; padding:11px 16px;
+  font-size:13px; font-weight:500; color:var(--muted);
+  cursor:pointer; border-bottom:2px solid transparent;
+  transition:color .15s, border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.tab.on { color:var(--primary); border-bottom-color:var(--primary); }
+
+/* ══════════════════════════════════════════════════════════
+   SECTION HEADER
+══════════════════════════════════════════════════════════ */
+.sec-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.sec-ttl { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+
+/* ══════════════════════════════════════════════════════════
+   PRODUCT CARDS
+══════════════════════════════════════════════════════════ */
+.pcard {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:13px 14px; margin-bottom:9px;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:border-color .15s;
+}
+.pcard:active { border-color:var(--primary); }
+.pcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:7px; }
+.pcard-name { font-size:15px; font-weight:600; flex:1; line-height:1.3; }
+.pcard-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+.pcard-foot { display:flex; justify-content:space-between; align-items:center; }
+.pcard-time { font-size:11px; color:var(--muted); }
+.pcard-score { font-size:12px; font-weight:700; color:var(--primary); }
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD STATS
+══════════════════════════════════════════════════════════ */
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:18px; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px; text-align:center;
+}
+.stat-val { font-size:30px; font-weight:800; line-height:1; margin-bottom:3px; }
+.stat-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.stat-card.s-active  .stat-val { color:var(--active); }
+.stat-card.s-watch   .stat-val { color:var(--watch); }
+.stat-card.s-archive .stat-val { color:var(--archive); }
+.stat-card.s-alert   .stat-val { color:var(--danger); }
+
+/* ══════════════════════════════════════════════════════════
+   EMPTY / LOADING / ERROR STATES
+══════════════════════════════════════════════════════════ */
+.empty { text-align:center; padding:44px 24px; color:var(--muted); }
+.empty .ei { font-size:38px; display:block; margin-bottom:10px; }
+.empty h3 { font-size:15px; color:var(--text); margin-bottom:5px; }
+.empty p { font-size:13px; }
+.loading { text-align:center; padding:44px 24px; color:var(--muted); }
+.spinner {
+  width:26px; height:26px; margin:0 auto 12px;
+  border:2px solid var(--border2); border-top-color:var(--primary);
+  border-radius:50%; animation:spin .65s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+#toast {
+  position:fixed; top:14px; left:50%;
+  transform:translateX(-50%) translateY(-80px);
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--r-sm); padding:9px 16px;
+  font-size:13px; font-weight:500; z-index:2000;
+  transition:transform .28s ease; white-space:nowrap;
+  max-width:calc(100vw - 32px); text-align:center;
+  pointer-events:none;
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+#toast.t-ok   { border-color:var(--success); color:var(--success); }
+#toast.t-err  { border-color:var(--danger);  color:var(--danger); }
+#toast.t-info { border-color:var(--primary); color:var(--primary); }
+
+/* ══════════════════════════════════════════════════════════
+   MODAL (bottom sheet)
+══════════════════════════════════════════════════════════ */
+.modal-wrap {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.72); z-index:300; align-items:flex-end;
+}
+.modal-wrap.on { display:flex; }
+.modal {
+  background:var(--surface); border-radius:var(--r) var(--r) 0 0;
+  width:100%; max-height:92vh; overflow-y:auto;
+  padding:18px 16px 34px;
+}
+.modal-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.modal-ttl { font-size:17px; font-weight:700; }
+.modal-x {
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); width:28px; height:28px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:14px; flex-shrink:0;
+}
+.modal-foot { display:flex; gap:10px; margin-top:18px; }
+
+/* ══════════════════════════════════════════════════════════
+   PRODUCT DETAIL DRAWER
+══════════════════════════════════════════════════════════ */
+#drawer {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.65); z-index:300;
+}
+#drawer.on { display:block; }
+.drawer-inner {
+  position:absolute; bottom:0; left:0; right:0;
+  background:var(--bg); border-radius:var(--r) var(--r) 0 0;
+  max-height:94vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding-bottom:28px;
+}
+.drawer-pull { text-align:center; padding:11px 0 6px; }
+.drawer-pull-bar { display:inline-block; width:36px; height:3px; background:var(--border2); border-radius:2px; }
+.drawer-hdr { padding:0 15px 14px; border-bottom:1px solid var(--border); }
+.drawer-name { font-size:18px; font-weight:700; line-height:1.3; margin-bottom:8px; }
+.drawer-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+.drawer-sec { padding:14px 15px; border-bottom:1px solid var(--border); }
+.drawer-sec-ttl { font-size:11px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.6px; margin-bottom:11px; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ii { display:flex; flex-direction:column; }
+.ii-lbl { font-size:11px; color:var(--muted); margin-bottom:2px; }
+.ii-val { font-size:14px; font-weight:500; word-break:break-all; }
+.ii-val.na { color:var(--muted); font-style:italic; font-weight:400; }
+.notes-box { background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--r-sm); padding:10px 12px; font-size:13px;
+  color:var(--text); margin-top:10px; }
+
+/* Snapshot metric grid */
+.snap-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.snap-m { text-align:center; }
+.snap-mv { font-size:14px; font-weight:600; }
+.snap-ml { font-size:10px; color:var(--muted); margin-top:1px; }
+
+/* Historical snapshot row */
+.snap-row {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-sm); padding:11px 12px; margin-bottom:8px;
+}
+.snap-date { font-size:11px; color:var(--muted); margin-bottom:8px; }
+
+/* Activity log */
+.log-item { display:flex; gap:9px; padding:9px 0; border-bottom:1px solid var(--border); }
+.log-item:last-child { border-bottom:none; }
+.log-dot { width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:5px; }
+.log-action { font-size:13px; font-weight:500; }
+.log-detail { font-size:12px; color:var(--muted); }
+.log-time { font-size:11px; color:var(--muted2); margin-top:2px; }
+
+/* Drawer action buttons */
+.drawer-acts { padding:14px 15px; display:flex; flex-direction:column; gap:9px; }
+
+/* ══════════════════════════════════════════════════════════
+   ALERTS VIEW
+══════════════════════════════════════════════════════════ */
+.alert-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-left-width:3px; border-radius:var(--r);
+  padding:12px 13px; margin-bottom:9px;
+}
+.alert-card.sev-high   { border-left-color:var(--danger); }
+.alert-card.sev-medium { border-left-color:var(--warning); }
+.alert-card.sev-low    { border-left-color:var(--success); }
+.alert-card.resolved   { opacity:.48; }
+.alert-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:5px; }
+.alert-type { font-size:13px; font-weight:600; }
+.alert-msg { font-size:13px; color:var(--text); margin-bottom:5px; }
+.alert-meta { font-size:11px; color:var(--muted); }
+
+/* ══════════════════════════════════════════════════════════
+   SETTINGS VIEW
+══════════════════════════════════════════════════════════ */
+.set-sec { margin-bottom:22px; }
+.set-sec-ttl { font-size:11px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.6px; margin-bottom:9px; }
+.set-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:13px 14px; margin-bottom:8px;
+}
+.set-item-lbl { font-size:13px; font-weight:500; margin-bottom:8px; }
+.set-row { display:flex; gap:8px; align-items:center; }
+.set-row input { flex:1; }
+.url-txt { font-size:11px; color:var(--muted); word-break:break-all; margin-top:6px; }
+.kv-row { display:flex; justify-content:space-between; padding:6px 0;
+  border-bottom:1px solid var(--border); }
+.kv-row:last-child { border-bottom:none; }
+.kv-k { font-size:12px; color:var(--muted); }
+.kv-v { font-size:12px; }
+.about-row { display:flex; justify-content:space-between; padding:5px 0; }
+.about-k { font-size:13px; color:var(--muted); }
+.about-v { font-size:13px; }
+
+/* ══════════════════════════════════════════════════════════
+   MISC UTILS
+══════════════════════════════════════════════════════════ */
+.p16 { padding:16px; }
+.mt12 { margin-top:12px; }
+.mt16 { margin-top:16px; }
+.mb8  { margin-bottom:8px; }
+.text-sm   { font-size:12px; }
+.text-muted { color:var(--muted); }
+.text-ok    { color:var(--success); }
+.text-err   { color:var(--danger); }
+.text-info  { color:var(--primary); }
+.divider { height:1px; background:var(--border); margin:14px 0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══════════════════════════════════════ TOAST ══ -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════ SETUP SCREEN ══ -->
+<div id="sc-setup" class="screen">
+  <div class="setup-box">
+    <div class="setup-logo">
+      <span class="icon">📡</span>
+      <h1>Affiliate Radar V2</h1>
+      <p>Phase 1 · Google Sheets Backend</p>
+    </div>
+
+    <div class="fgrp">
+      <label>Apps Script Web App URL</label>
+      <input type="url" id="setup-url" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <p class="text-sm text-muted mb8">
+      Deploy your Code.gs as a Web App, then paste the URL above.
+    </p>
+
+    <div id="setup-msg" style="display:none;font-size:12px;margin:10px 0;"></div>
+
+    <button class="btn btn-s btn-w mb8" onclick="doTestConn()">🔗 Test Connection</button>
+    <button class="btn btn-p btn-w" onclick="doSaveSetup()">Save &amp; Launch →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MAIN SCREEN ══ -->
+<div id="sc-main" class="screen">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">
+      <span class="logo-icon">📡</span>
+      <span class="logo-text">Affiliate Radar</span>
+    </div>
+    <button class="btn btn-g btn-sm" onclick="refreshView()">↻ Refresh</button>
+  </header>
+
+  <!-- Scrollable content area -->
+  <div class="app-content" id="app-content">
+
+    <!-- ── DASHBOARD ──────────────────────── -->
+    <div id="v-dashboard" class="view">
+      <div id="dash-body" class="p16">
+        <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTS ───────────────────────── -->
+    <div id="v-products" class="view">
+      <div class="tabs" id="prod-tabs">
+        <div class="tab on"  onclick="setFilter('active')"  data-f="active">Active</div>
+        <div class="tab"     onclick="setFilter('watch')"   data-f="watch">Watch</div>
+        <div class="tab"     onclick="setFilter('archive')" data-f="archive">Archive</div>
+        <div class="tab"     onclick="setFilter('all')"     data-f="all">All</div>
+      </div>
+      <div id="prod-list" class="p16">
+        <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- ── ALERTS ─────────────────────────── -->
+    <div id="v-alerts" class="view">
+      <div id="alerts-body" class="p16">
+        <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ───────────────────────── -->
+    <div id="v-settings" class="view">
+      <div id="settings-body" class="p16">
+        <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+      </div>
+    </div>
+
+  </div><!-- /app-content -->
+
+  <!-- FAB (add product) -->
+  <button id="fab" onclick="openAddProd()">+</button>
+
+  <!-- Bottom nav -->
+  <nav id="bot-nav">
+    <div class="nav-btn on" data-v="dashboard" onclick="goView('dashboard')">
+      <span class="ni">🏠</span><span class="nl">Dashboard</span>
+    </div>
+    <div class="nav-btn" data-v="products" onclick="goView('products')">
+      <span class="ni">📦</span><span class="nl">Products</span>
+    </div>
+    <div class="nav-btn" data-v="alerts" onclick="goView('alerts')">
+      <span class="ni">🔔</span><span class="nl">Alerts</span>
+      <span id="alert-dot" class="alert-dot">0</span>
+    </div>
+    <div class="nav-btn" data-v="settings" onclick="goView('settings')">
+      <span class="ni">⚙️</span><span class="nl">Settings</span>
+    </div>
+  </nav>
+
+</div><!-- /sc-main -->
+
+<!-- ═══════════════════════════════════════ PRODUCT FORM MODAL ══ -->
+<div id="m-product" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-ttl" id="pf-title">Add Product</span>
+      <div class="modal-x" onclick="closeProdModal()">✕</div>
+    </div>
+
+    <input type="hidden" id="pf-id">
+
+    <div class="fgrp">
+      <label>Product Name <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="pf-name" placeholder="Enter product name">
+    </div>
+    <div class="fgrp">
+      <label>Product URL</label>
+      <input type="url" id="pf-url" placeholder="https://...">
+    </div>
+    <div class="fgrp">
+      <label>Category</label>
+      <input type="text" id="pf-cat" placeholder="e.g. Beauty, Phone Accessories">
+    </div>
+
+    <div class="row2">
+      <div class="fgrp">
+        <label>Status</label>
+        <select id="pf-status">
+          <option value="Active">Active</option>
+          <option value="Watch">Watch</option>
+          <option value="Archive">Archive</option>
+        </select>
+      </div>
+      <div class="fgrp">
+        <label>Review Priority</label>
+        <select id="pf-priority">
+          <option value="">Not Set</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="fgrp">
+        <label>Watch Level</label>
+        <input type="text" id="pf-watch" placeholder="e.g. Tier 1">
+      </div>
+      <div class="fgrp">
+        <label>Lifecycle Stage</label>
+        <input type="text" id="pf-life" placeholder="e.g. Rising">
+      </div>
+    </div>
+
+    <div class="fgrp">
+      <label>Notes</label>
+      <textarea id="pf-notes" placeholder="Anything worth remembering about this product..."></textarea>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-s" style="flex:0 0 76px" onclick="closeProdModal()">Cancel</button>
+      <button class="btn btn-p" style="flex:1" id="pf-submit" onclick="submitProd()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SNAPSHOT FORM MODAL ══ -->
+<div id="m-snapshot" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-ttl">Add Snapshot</span>
+      <div class="modal-x" onclick="closeSnapModal()">✕</div>
+    </div>
+
+    <input type="hidden" id="sf-pid">
+    <p class="text-sm text-muted mb8">Enter only the data you have. All fields are optional.</p>
+
+    <div class="row2">
+      <div class="fgrp"><label>Price</label>
+        <input type="number" id="sf-price" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="fgrp"><label>Commission %</label>
+        <input type="number" id="sf-cp" placeholder="0.00" step="0.01" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="fgrp"><label>Commission Amt</label>
+        <input type="number" id="sf-ca" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="fgrp"><label>Rating</label>
+        <input type="number" id="sf-rat" placeholder="0.0" step="0.1" min="0" max="5"></div>
+    </div>
+    <div class="row2">
+      <div class="fgrp"><label>Review Count</label>
+        <input type="number" id="sf-rev" placeholder="0" min="0"></div>
+      <div class="fgrp"><label>Total Sold</label>
+        <input type="number" id="sf-sold" placeholder="0" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="fgrp"><label>Orders</label>
+        <input type="number" id="sf-ord" placeholder="0" min="0"></div>
+      <div class="fgrp"><label>CTR %</label>
+        <input type="number" id="sf-ctr" placeholder="0.00" step="0.01" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="fgrp"><label>Creators</label>
+        <input type="number" id="sf-cre" placeholder="0" min="0"></div>
+      <div class="fgrp"><label>Add to Basket</label>
+        <input type="number" id="sf-atb" placeholder="0" min="0"></div>
+    </div>
+    <div class="fgrp"><label>Affiliate Density</label>
+      <input type="number" id="sf-afd" placeholder="0.00" step="0.01" min="0"></div>
+
+    <div class="modal-foot">
+      <button class="btn btn-s" style="flex:0 0 76px" onclick="closeSnapModal()">Cancel</button>
+      <button class="btn btn-p" style="flex:1" onclick="submitSnap()">Save Snapshot</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ALERT FORM MODAL ══ -->
+<div id="m-alert" class="modal-wrap">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-ttl">Create Alert</span>
+      <div class="modal-x" onclick="closeAlertModal()">✕</div>
+    </div>
+
+    <div class="fgrp">
+      <label>Product</label>
+      <select id="af-pid"><option value="">Select product...</option></select>
+    </div>
+    <div class="row2">
+      <div class="fgrp"><label>Alert Type</label>
+        <input type="text" id="af-type" placeholder="e.g. Price Drop, Stock Low"></div>
+      <div class="fgrp"><label>Severity</label>
+        <select id="af-sev">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrp">
+      <label>Message</label>
+      <textarea id="af-msg" placeholder="Describe the alert..."></textarea>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-s" style="flex:0 0 76px" onclick="closeAlertModal()">Cancel</button>
+      <button class="btn btn-p" style="flex:1" onclick="submitAlert()">Create Alert</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PRODUCT DETAIL DRAWER ══ -->
+<div id="drawer">
+  <div class="drawer-inner" id="drawer-inner">
+    <!-- filled dynamically -->
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────
+const ST = {
+  apiUrl:   localStorage.getItem('ar2_url') || '',
+  view:     'dashboard',
+  filter:   'active',
+  products: [],        // current filtered list
+  allProds: [],        // unfiltered — used for alert dropdowns & name lookups
+  curProd:  null,      // product open in drawer
+};
+
+// ─────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (!ST.apiUrl) { showScreen('setup'); }
+  else            { showScreen('main'); goView('dashboard'); }
+});
+
+// ─────────────────────────────────────────────────────────
+// SCREEN / VIEW HELPERS
+// ─────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('on'));
+  document.getElementById('sc-' + name).classList.add('on');
+}
+
+function goView(name) {
+  ST.view = name;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('on'));
+  document.getElementById('v-' + name).classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(el => {
+    el.classList.toggle('on', el.dataset.v === name);
+  });
+  document.getElementById('fab').style.display = (name === 'products') ? 'flex' : 'none';
+
+  // Scroll content area to top on view switch
+  document.getElementById('app-content').scrollTop = 0;
+
+  switch (name) {
+    case 'dashboard': loadDash();      break;
+    case 'products':  loadProds();     break;
+    case 'alerts':    loadAlerts();    break;
+    case 'settings':  loadSettings();  break;
+  }
+}
+
+function refreshView() { goView(ST.view); }
+
+// ─────────────────────────────────────────────────────────
+// API LAYER — all requests go via GET to avoid CORS issues
+// ─────────────────────────────────────────────────────────
+async function api(action, params = {}) {
+  if (!ST.apiUrl) throw new Error('API URL not configured');
+  const qs = new URLSearchParams({ action });
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== null && v !== undefined && v !== '') qs.append(k, v);
+  }
+  const res = await fetch(`${ST.apiUrl}?${qs}`, { redirect: 'follow', cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.success === false) throw new Error(data.error || 'Unknown server error');
+  return data;
+}
+
+// ─────────────────────────────────────────────────────────
+// SETUP
+// ─────────────────────────────────────────────────────────
+async function doTestConn() {
+  const url = id('setup-url').value.trim();
+  const msg = id('setup-msg');
+  if (!url) { showMsg(msg, 'Please enter the URL', 'err'); return; }
+
+  showMsg(msg, '⏳ Connecting...', 'info');
+  try {
+    const saved = ST.apiUrl;
+    ST.apiUrl = url;
+    const d = await api('health');
+    ST.apiUrl = saved;
+    if (d.status === 'ok') {
+      showMsg(msg, `✅ Connected — ${d.spreadsheetName || 'Affiliate Radar'}`, 'ok');
+    } else {
+      ST.apiUrl = saved;
+      showMsg(msg, '⚠️ ' + (d.error || 'Unexpected response'), 'err');
+    }
+  } catch(e) {
+    ST.apiUrl = '';
+    showMsg(msg, '❌ ' + e.message, 'err');
+  }
+}
+
+function doSaveSetup() {
+  const url = id('setup-url').value.trim();
+  if (!url) { toast('Enter the Apps Script URL first', 'err'); return; }
+  ST.apiUrl = url;
+  localStorage.setItem('ar2_url', url);
+  showScreen('main');
+  goView('dashboard');
+  toast('Setup complete ✓', 'ok');
+}
+
+function showMsg(el, txt, type) {
+  el.textContent = txt;
+  el.style.display = 'block';
+  el.className = 'text-' + type;
+}
+
+// ─────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────
+async function loadDash() {
+  const el = id('dash-body');
+  el.innerHTML = loadingHTML();
+  try {
+    const d = await api('getDashboard');
+    const s = d.stats || {};
+    const prods = d.products || [];
+
+    // Alert badge
+    const dot = id('alert-dot');
+    if (s.unresolvedAlerts > 0) {
+      dot.textContent = s.unresolvedAlerts;
+      dot.classList.add('on');
+    } else {
+      dot.classList.remove('on');
+    }
+
+    let h = `
+      <div class="stats-grid">
+        <div class="stat-card s-active">
+          <div class="stat-val">${s.active ?? 0}</div>
+          <div class="stat-lbl">Active</div>
+        </div>
+        <div class="stat-card s-watch">
+          <div class="stat-val">${s.watch ?? 0}</div>
+          <div class="stat-lbl">Watch</div>
+        </div>
+        <div class="stat-card s-archive">
+          <div class="stat-val">${s.archive ?? 0}</div>
+          <div class="stat-lbl">Archived</div>
+        </div>
+        <div class="stat-card s-alert">
+          <div class="stat-val">${s.unresolvedAlerts ?? 0}</div>
+          <div class="stat-lbl">Alerts</div>
+        </div>
+      </div>
+
+      <div class="sec-hdr">
+        <div class="sec-ttl">Active &amp; Watch Products</div>
+        <button class="btn btn-g btn-sm" onclick="goView('products')">View All</button>
+      </div>
+    `;
+
+    if (prods.length === 0) {
+      h += emptyHTML('📦', 'No active products', 'Tap Products → + to add your first product.');
+    } else {
+      prods.forEach(p => { h += prodCard(p); });
+    }
+
+    el.innerHTML = h;
+  } catch(e) {
+    el.innerHTML = errHTML(e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// PRODUCTS
+// ─────────────────────────────────────────────────────────
+async function loadProds() {
+  const el = id('prod-list');
+  el.innerHTML = loadingHTML();
+  try {
+    const d = await api('getProducts', { filter: ST.filter });
+    ST.products = d.products || [];
+    renderProds(el, ST.products);
+    // Also refresh the full product list for alert dropdowns
+    if (ST.filter !== 'all') {
+      api('getProducts', { filter: 'all' }).then(r => { ST.allProds = r.products || []; }).catch(()=>{});
+    } else {
+      ST.allProds = ST.products;
+    }
+  } catch(e) {
+    el.innerHTML = errHTML(e.message);
+  }
+}
+
+function renderProds(el, prods) {
+  if (prods.length === 0) {
+    const msg = ST.filter === 'archive' ? 'No archived products.'
+              : ST.filter === 'watch'   ? 'No watch-listed products.'
+              : 'No products yet. Tap + to add one.';
+    el.innerHTML = emptyHTML('📦', 'No products found', msg);
+    return;
+  }
+  el.innerHTML = prods.map(prodCard).join('');
+}
+
+function prodCard(p) {
+  const sc = (p.Status || '').toLowerCase();
+  const pc = (p.ReviewPriority || '').toLowerCase();
+  const score = hasVal(p.CurrentScore) ? p.CurrentScore : '—';
+  return `
+    <div class="pcard" onclick="openDrawer('${esc(p.ProductID)}')">
+      <div class="pcard-top">
+        <div class="pcard-name">${esc(p.ProductName || 'Unnamed')}</div>
+        <span class="badge b-${sc}">${esc(p.Status || '—')}</span>
+      </div>
+      <div class="pcard-tags">
+        ${p.Category      ? `<span class="badge b-muted">${esc(p.Category)}</span>` : ''}
+        ${p.ReviewPriority? `<span class="badge b-${pc}">${esc(p.ReviewPriority)}</span>` : ''}
+        ${p.LifecycleStage? `<span class="badge b-primary">${esc(p.LifecycleStage)}</span>` : ''}
+      </div>
+      <div class="pcard-foot">
+        <div class="pcard-time">Checked: ${p.LastChecked ? relTime(p.LastChecked) : '—'}</div>
+        <div class="pcard-score">Score: ${score}</div>
+      </div>
+    </div>
+  `;
+}
+
+function setFilter(f) {
+  ST.filter = f;
+  document.querySelectorAll('#prod-tabs .tab').forEach(el => {
+    el.classList.toggle('on', el.dataset.f === f);
+  });
+  loadProds();
+}
+
+// ─────────────────────────────────────────────────────────
+// PRODUCT DETAIL DRAWER
+// ─────────────────────────────────────────────────────────
+async function openDrawer(productId) {
+  const dr = id('drawer');
+  const inner = id('drawer-inner');
+  dr.classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  inner.innerHTML = `
+    <div class="drawer-pull"><div class="drawer-pull-bar"></div></div>
+    <div class="drawer-hdr">
+      <div class="loading" style="padding:24px 0;">
+        <div class="spinner"></div><p>Loading product...</p>
+      </div>
+    </div>`;
+
+  try {
+    const [pd, sd, ld] = await Promise.all([
+      api('getProduct',       { productId }),
+      api('getSnapshotHistory',{ productId }),
+      api('getActivityLog',   { productId, limit: 15 }),
+    ]);
+    ST.curProd = pd.product;
+    renderDrawer(inner, pd.product, sd.snapshots || [], ld.logs || []);
+  } catch(e) {
+    inner.innerHTML = `
+      <div class="drawer-pull"><div class="drawer-pull-bar"></div></div>
+      <div class="drawer-hdr">${errHTML(e.message)}</div>
+      <div class="drawer-acts">
+        <button class="btn btn-s btn-w" onclick="closeDrawer()">Close</button>
+      </div>`;
+  }
+}
+
+function renderDrawer(el, p, snaps, logs) {
+  const sc = (p.Status || '').toLowerCase();
+  const pc = (p.ReviewPriority || '').toLowerCase();
+  const latest = snaps[0] || null;
+
+  let h = `
+    <div class="drawer-pull"><div class="drawer-pull-bar"></div></div>
+
+    <div class="drawer-hdr">
+      <div class="drawer-name">${esc(p.ProductName || 'Unnamed Product')}</div>
+      <div class="drawer-tags">
+        <span class="badge b-${sc}">${esc(p.Status || '—')}</span>
+        ${p.Category       ? `<span class="badge b-muted">${esc(p.Category)}</span>` : ''}
+        ${p.ReviewPriority ? `<span class="badge b-${pc}">${esc(p.ReviewPriority)} Priority</span>` : ''}
+      </div>
+      ${p.ProductURL
+        ? `<a href="${esc(p.ProductURL)}" target="_blank" style="font-size:12px;">🔗 Open Product Page</a>`
+        : '<span class="text-muted text-sm">No URL saved</span>'}
+    </div>
+
+    <!-- ── Product Info ── -->
+    <div class="drawer-sec">
+      <div class="drawer-sec-ttl">Product Info</div>
+      <div class="info-grid">
+        ${ii('Product ID',      p.ProductID)}
+        ${ii('Lifecycle Stage', p.LifecycleStage)}
+        ${ii('Watch Level',     p.WatchLevel)}
+        ${ii('Current Score',   p.CurrentScore)}
+        ${ii('Date Added',      p.DateAdded ? fmtDate(p.DateAdded) : null)}
+        ${ii('Last Checked',    p.LastChecked ? relTime(p.LastChecked) : null)}
+        ${ii('Review Priority', p.ReviewPriority)}
+        ${ii('Status',         p.Status)}
+      </div>
+      ${p.Notes
+        ? `<div class="notes-box">${esc(p.Notes)}</div>`
+        : ''}
+    </div>
+
+    <!-- ── Latest Snapshot ── -->
+    <div class="drawer-sec">
+      <div class="drawer-sec-ttl">Latest Snapshot</div>
+  `;
+
+  if (!latest) {
+    h += `<p class="text-muted text-sm">No snapshots yet. Add one to start tracking metrics.</p>`;
+  } else {
+    h += `
+      <p class="text-muted text-sm mb8">${fmtDate(latest.SnapshotDate)}</p>
+      <div class="snap-grid">
+        ${sm('Price',       latest.Price)}
+        ${sm('Comm %',      latest.CommissionPercent)}
+        ${sm('Comm Amt',    latest.CommissionAmount)}
+        ${sm('Rating',      latest.Rating)}
+        ${sm('Reviews',     latest.ReviewCount)}
+        ${sm('Total Sold',  latest.TotalSold)}
+        ${sm('Orders',      latest.Orders)}
+        ${sm('CTR %',       latest.CTR)}
+        ${sm('Creators',    latest.Creators)}
+        ${sm('Add Basket',  latest.AddToBasket)}
+        ${sm('Aff Density', latest.AffiliateDensity)}
+      </div>
+    `;
+  }
+
+  h += `</div>`;
+
+  // ── Snapshot History ──
+  h += `
+    <div class="drawer-sec">
+      <div class="drawer-sec-ttl">Snapshot History (${snaps.length})</div>
+  `;
+
+  if (snaps.length === 0) {
+    h += `<p class="text-muted text-sm">No snapshots recorded yet.</p>`;
+  } else if (snaps.length === 1) {
+    h += `<p class="text-muted text-sm">1 snapshot recorded. History will grow as you add more.</p>`;
+  } else {
+    // Show all except the first (already shown as "latest" above)
+    snaps.slice(1).forEach(s => {
+      h += `
+        <div class="snap-row">
+          <div class="snap-date">${fmtDate(s.SnapshotDate)}</div>
+          <div class="snap-grid">
+            ${sm('Price',      s.Price)}
+            ${sm('Comm %',     s.CommissionPercent)}
+            ${sm('Rating',     s.Rating)}
+            ${sm('Total Sold', s.TotalSold)}
+            ${sm('Orders',     s.Orders)}
+            ${sm('CTR %',      s.CTR)}
+          </div>
+        </div>`;
+    });
+  }
+
+  h += `</div>`;
+
+  // ── Activity Log ──
+  if (logs.length > 0) {
+    h += `<div class="drawer-sec"><div class="drawer-sec-ttl">Recent Activity</div>`;
+    logs.slice(0, 12).forEach(l => {
+      h += `
+        <div class="log-item">
+          <div class="log-dot"></div>
+          <div style="flex:1;min-width:0;">
+            <div class="log-action">${esc(l.Action || '')}</div>
+            ${l.Details ? `<div class="log-detail">${esc(l.Details)}</div>` : ''}
+            <div class="log-time">${l.Date ? relTime(l.Date) : '—'}</div>
+          </div>
+        </div>`;
+    });
+    h += `</div>`;
+  }
+
+  // ── Actions ──
+  const isArchived = (p.Status || '').toLowerCase() === 'archive';
+  h += `
+    <div class="drawer-acts">
+      <div style="display:flex;gap:9px;">
+        <button class="btn btn-s" style="flex:1" onclick="openEditProd()">✏️ Edit</button>
+        <button class="btn btn-p" style="flex:1" onclick="openAddSnap('${esc(p.ProductID)}')">📊 Add Snapshot</button>
+      </div>
+      ${isArchived
+        ? `<button class="btn btn-s btn-w" onclick="doRestore('${esc(p.ProductID)}')">♻️ Restore to Active</button>`
+        : `<button class="btn btn-d btn-w" onclick="doArchive('${esc(p.ProductID)}','${esc(p.ProductName||'')}')">🗃️ Archive Product</button>`
+      }
+      <button class="btn btn-s btn-w" onclick="closeDrawer()">Close</button>
+    </div>
+  `;
+
+  el.innerHTML = h;
+}
+
+function closeDrawer() {
+  id('drawer').classList.remove('on');
+  document.body.style.overflow = '';
+  ST.curProd = null;
+}
+
+id('drawer').addEventListener('click', e => { if (e.target === id('drawer')) closeDrawer(); });
+
+// Snapshot metric cell helper
+function sm(label, val) {
+  const display = hasVal(val)
+    ? `<span>${esc(String(val))}</span>`
+    : `<span style="color:var(--muted)">—</span>`;
+  return `
+    <div class="snap-m">
+      <div class="snap-mv">${display}</div>
+      <div class="snap-ml">${label}</div>
+    </div>`;
+}
+
+// Info item helper
+function ii(label, val) {
+  const empty = !hasVal(val);
+  return `
+    <div class="ii">
+      <span class="ii-lbl">${label}</span>
+      <span class="ii-val ${empty ? 'na' : ''}">${empty ? 'Not set' : esc(String(val))}</span>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD / EDIT PRODUCT
+// ─────────────────────────────────────────────────────────
+function openAddProd() {
+  id('pf-title').textContent = 'Add Product';
+  id('pf-submit').textContent = 'Save Product';
+  id('pf-id').value = '';
+  clearFields(['pf-name','pf-url','pf-cat','pf-watch','pf-life','pf-notes']);
+  id('pf-status').value = 'Active';
+  id('pf-priority').value = '';
+  id('m-product').classList.add('on');
+}
+
+function openEditProd() {
+  const p = ST.curProd;
+  if (!p) { toast('Product data unavailable', 'err'); return; }
+  closeDrawer();
+
+  id('pf-title').textContent = 'Edit Product';
+  id('pf-submit').textContent = 'Save Changes';
+  id('pf-id').value       = p.ProductID    || '';
+  id('pf-name').value     = p.ProductName  || '';
+  id('pf-url').value      = p.ProductURL   || '';
+  id('pf-cat').value      = p.Category     || '';
+  id('pf-status').value   = p.Status       || 'Active';
+  id('pf-priority').value = p.ReviewPriority || '';
+  id('pf-watch').value    = p.WatchLevel   || '';
+  id('pf-life').value     = p.LifecycleStage || '';
+  id('pf-notes').value    = p.Notes        || '';
+  id('m-product').classList.add('on');
+}
+
+function closeProdModal() { id('m-product').classList.remove('on'); }
+id('m-product').addEventListener('click', e => { if (e.target === id('m-product')) closeProdModal(); });
+
+async function submitProd() {
+  const pid  = id('pf-id').value.trim();
+  const name = id('pf-name').value.trim();
+  if (!name) { toast('Product name is required', 'err'); return; }
+
+  const payload = {
+    productName:    name,
+    productURL:     id('pf-url').value.trim(),
+    category:       id('pf-cat').value.trim(),
+    status:         id('pf-status').value,
+    reviewPriority: id('pf-priority').value,
+    watchLevel:     id('pf-watch').value.trim(),
+    lifecycleStage: id('pf-life').value.trim(),
+    notes:          id('pf-notes').value.trim(),
+  };
+
+  const btn = id('pf-submit');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    if (pid) {
+      await api('editProduct', { productId: pid, ...payload });
+      toast('Product updated ✓', 'ok');
+    } else {
+      await api('createProduct', payload);
+      toast('Product created ✓', 'ok');
+    }
+    closeProdModal();
+    loadProds();
+    if (ST.view === 'dashboard') loadDash();
+  } catch(e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = pid ? 'Save Changes' : 'Save Product';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// ARCHIVE / RESTORE
+// ─────────────────────────────────────────────────────────
+async function doArchive(productId, productName) {
+  if (!confirm(`Archive "${productName}"?\n\nYou can restore it later from its detail screen.`)) return;
+  try {
+    await api('archiveProduct', { productId });
+    toast('Product archived', 'ok');
+    closeDrawer();
+    loadProds();
+    if (ST.view === 'dashboard') loadDash();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function doRestore(productId) {
+  try {
+    await api('editProduct', { productId, status: 'Active' });
+    toast('Product restored to Active ✓', 'ok');
+    closeDrawer();
+    loadProds();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ─────────────────────────────────────────────────────────
+// SNAPSHOT
+// ─────────────────────────────────────────────────────────
+function openAddSnap(productId) {
+  closeDrawer();
+  id('sf-pid').value = productId;
+  clearFields(['sf-price','sf-cp','sf-ca','sf-rat','sf-rev',
+               'sf-sold','sf-ord','sf-ctr','sf-cre','sf-atb','sf-afd']);
+  id('m-snapshot').classList.add('on');
+}
+
+function closeSnapModal() { id('m-snapshot').classList.remove('on'); }
+id('m-snapshot').addEventListener('click', e => { if (e.target === id('m-snapshot')) closeSnapModal(); });
+
+async function submitSnap() {
+  const productId = id('sf-pid').value;
+  if (!productId) { toast('No product selected', 'err'); return; }
+
+  const payload = {
+    productId,
+    price:             id('sf-price').value,
+    commissionPercent: id('sf-cp').value,
+    commissionAmount:  id('sf-ca').value,
+    rating:            id('sf-rat').value,
+    reviewCount:       id('sf-rev').value,
+    totalSold:         id('sf-sold').value,
+    orders:            id('sf-ord').value,
+    ctr:               id('sf-ctr').value,
+    creators:          id('sf-cre').value,
+    addToBasket:       id('sf-atb').value,
+    affiliateDensity:  id('sf-afd').value,
+  };
+
+  try {
+    await api('createSnapshot', payload);
+    toast('Snapshot saved ✓', 'ok');
+    closeSnapModal();
+    // Reopen the product detail to show fresh data
+    openDrawer(productId);
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ─────────────────────────────────────────────────────────
+// ALERTS
+// ─────────────────────────────────────────────────────────
+async function loadAlerts() {
+  const el = id('alerts-body');
+  el.innerHTML = loadingHTML();
+  try {
+    const d = await api('getAlerts');
+    renderAlerts(el, d.alerts || []);
+  } catch(e) {
+    el.innerHTML = errHTML(e.message);
+  }
+}
+
+function renderAlerts(el, alerts) {
+  const open   = alerts.filter(a => (a.Resolved || '').toLowerCase() !== 'yes');
+  const closed = alerts.filter(a => (a.Resolved || '').toLowerCase() === 'yes');
+
+  // Update badge
+  const dot = id('alert-dot');
+  if (open.length > 0) {
+    dot.textContent = open.length;
+    dot.classList.add('on');
+  } else {
+    dot.classList.remove('on');
+  }
+
+  let h = `
+    <div class="sec-hdr">
+      <div class="sec-ttl">Unresolved (${open.length})</div>
+      <button class="btn btn-g btn-sm" onclick="openAlertModal()">+ New Alert</button>
+    </div>
+  `;
+
+  if (open.length === 0) {
+    h += emptyHTML('✅', 'No unresolved alerts', 'All clear. Alerts you create will appear here.');
+  } else {
+    open.forEach(a => { h += alertCard(a); });
+  }
+
+  if (closed.length > 0) {
+    h += `
+      <div class="sec-hdr mt16">
+        <div class="sec-ttl">Resolved (${closed.length})</div>
+      </div>
+    `;
+    closed.slice(0, 20).forEach(a => { h += alertCard(a); });
+  }
+
+  el.innerHTML = h;
+}
+
+function alertCard(a) {
+  const sev      = (a.AlertSeverity || 'medium').toLowerCase();
+  const resolved = (a.Resolved || '').toLowerCase() === 'yes';
+  const pName    = findProdName(a.ProductID);
+
+  return `
+    <div class="alert-card sev-${sev} ${resolved ? 'resolved' : ''}">
+      <div class="alert-top">
+        <span class="alert-type">${esc(a.AlertType || 'Alert')}</span>
+        <span class="badge b-${sev === 'high' ? 'high' : sev === 'medium' ? 'medium' : 'low'}">${esc(a.AlertSeverity || '—')}</span>
+      </div>
+      <div class="alert-msg">${esc(a.Message || '—')}</div>
+      <div class="alert-meta">
+        ${pName ? `📦 ${esc(pName)} · ` : ''}
+        ${a.AlertDate ? fmtDate(a.AlertDate) : '—'}
+        ${!resolved
+          ? ` · <a href="#" onclick="doResolveAlert('${esc(a.AlertID)}');return false;">Mark Resolved</a>`
+          : ' · ✅ Resolved'}
+      </div>
+    </div>`;
+}
+
+function findProdName(pid) {
+  const p = [...ST.products, ...ST.allProds].find(x => x.ProductID === pid);
+  return p ? p.ProductName : (pid || '');
+}
+
+async function doResolveAlert(alertId) {
+  try {
+    await api('resolveAlert', { alertId });
+    toast('Alert resolved ✓', 'ok');
+    loadAlerts();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function openAlertModal() {
+  // Load all products fresh for the dropdown
+  let prods = ST.allProds;
+  if (!prods.length) {
+    try { const d = await api('getProducts', { filter: 'all' }); prods = d.products || []; ST.allProds = prods; }
+    catch(e) { prods = []; }
+  }
+
+  const sel = id('af-pid');
+  sel.innerHTML = '<option value="">Select product...</option>';
+  prods.filter(p => p.Status !== 'Archive').forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.ProductID;
+    opt.textContent = p.ProductName;
+    sel.appendChild(opt);
+  });
+
+  clearFields(['af-type','af-msg']);
+  id('af-sev').value = 'Medium';
+  id('m-alert').classList.add('on');
+}
+
+function closeAlertModal() { id('m-alert').classList.remove('on'); }
+id('m-alert').addEventListener('click', e => { if (e.target === id('m-alert')) closeAlertModal(); });
+
+async function submitAlert() {
+  const productId = id('af-pid').value;
+  const alertType = id('af-type').value.trim();
+  const message   = id('af-msg').value.trim();
+
+  if (!productId) { toast('Please select a product', 'err'); return; }
+  if (!alertType) { toast('Alert type is required', 'err'); return; }
+  if (!message)   { toast('Message is required', 'err');   return; }
+
+  try {
+    await api('createAlert', {
+      productId,
+      alertType,
+      alertSeverity: id('af-sev').value,
+      message,
+    });
+    toast('Alert created ✓', 'ok');
+    closeAlertModal();
+    loadAlerts();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ─────────────────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────────────────
+async function loadSettings() {
+  const el = id('settings-body');
+  el.innerHTML = loadingHTML();
+  try {
+    const d = await api('getSettings');
+    renderSettings(el, d.settings || {});
+  } catch(e) {
+    el.innerHTML = errHTML(e.message);
+  }
+}
+
+function renderSettings(el, s) {
+  const kvRows = Object.entries(s).map(([k, v]) =>
+    `<div class="kv-row"><span class="kv-k">${esc(k)}</span><span class="kv-v">${esc(String(v ?? '—'))}</span></div>`
+  ).join('') || '<p class="text-sm text-muted">No settings in sheet yet.</p>';
+
+  el.innerHTML = `
+    <!-- Connection -->
+    <div class="set-sec">
+      <div class="set-sec-ttl">Connection</div>
+      <div class="set-item">
+        <div class="set-item-lbl">Apps Script Web App URL</div>
+        <div class="url-txt">${esc(ST.apiUrl)}</div>
+        <button class="btn btn-s btn-sm btn-w" style="margin-top:10px;" onclick="changeUrl()">Change URL</button>
+      </div>
+      <div class="set-item">
+        <button class="btn btn-s btn-sm btn-w" onclick="testConn()">🔗 Test Connection</button>
+        <div id="conn-msg" style="display:none;" class="text-sm" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Review intervals -->
+    <div class="set-sec">
+      <div class="set-sec-ttl">Review Intervals</div>
+
+      <div class="set-item">
+        <div class="set-item-lbl">Active Products — Review Every (days)</div>
+        <div class="set-row">
+          <input type="number" id="si-active" value="${esc(String(s.active_review_days ?? ''))}" placeholder="e.g. 7" min="1">
+          <button class="btn btn-p btn-sm" onclick="saveSetting('active_review_days','si-active')">Save</button>
+        </div>
+      </div>
+
+      <div class="set-item">
+        <div class="set-item-lbl">Watch Products — Review Every (days)</div>
+        <div class="set-row">
+          <input type="number" id="si-watch" value="${esc(String(s.watch_review_days ?? ''))}" placeholder="e.g. 14" min="1">
+          <button class="btn btn-p btn-sm" onclick="saveSetting('watch_review_days','si-watch')">Save</button>
+        </div>
+      </div>
+
+      <div class="set-item">
+        <div class="set-item-lbl">Archive Products — Review Every (days)</div>
+        <div class="set-row">
+          <input type="number" id="si-archive" value="${esc(String(s.archive_review_days ?? ''))}" placeholder="e.g. 30" min="1">
+          <button class="btn btn-p btn-sm" onclick="saveSetting('archive_review_days','si-archive')">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- All settings in sheet -->
+    <div class="set-sec">
+      <div class="set-sec-ttl">All Sheet Settings</div>
+      <div class="set-item">${kvRows}</div>
+    </div>
+
+    <!-- About -->
+    <div class="set-sec">
+      <div class="set-sec-ttl">About</div>
+      <div class="set-item">
+        <div class="about-row"><span class="about-k">App</span><span class="about-v">Affiliate Radar V2</span></div>
+        <div class="about-row"><span class="about-k">Phase</span><span class="about-v">Phase 1 — Foundation</span></div>
+        <div class="about-row"><span class="about-k">Backend</span><span class="about-v">Google Apps Script</span></div>
+        <div class="about-row"><span class="about-k">Database</span><span class="about-v">Google Sheets</span></div>
+      </div>
+    </div>
+  `;
+}
+
+async function saveSetting(key, inputId) {
+  const val = id(inputId).value.trim();
+  if (!val) { toast('Enter a value first', 'err'); return; }
+  try {
+    await api('updateSetting', { key, value: val });
+    toast(`Saved: ${key}`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+function changeUrl() {
+  const nu = prompt('Enter new Apps Script Web App URL:', ST.apiUrl);
+  if (nu && nu.trim()) {
+    ST.apiUrl = nu.trim();
+    localStorage.setItem('ar2_url', ST.apiUrl);
+    toast('URL updated ✓', 'ok');
+    loadSettings();
+  }
+}
+
+async function testConn() {
+  const msg = id('conn-msg');
+  msg.style.display = 'block';
+  showMsg(msg, '⏳ Testing...', 'info');
+  try {
+    const d = await api('health');
+    showMsg(msg, `✅ Connected — ${d.spreadsheetName || 'Affiliate Radar'}`, 'ok');
+  } catch(e) {
+    showMsg(msg, '❌ ' + e.message, 'err');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────────────
+let _toastTimer = null;
+function toast(msg, type = 'info') {
+  const el = id('toast');
+  el.textContent = msg;
+  el.className = `show t-${type}`;
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3200);
+}
+
+// ─────────────────────────────────────────────────────────
+// HTML HELPERS
+// ─────────────────────────────────────────────────────────
+function loadingHTML(msg = 'Loading...') {
+  return `<div class="loading"><div class="spinner"></div><p>${msg}</p></div>`;
+}
+function errHTML(msg) {
+  return `<div class="empty"><span class="ei">⚠️</span><h3>Could Not Load</h3><p>${esc(msg)}</p></div>`;
+}
+function emptyHTML(icon, title, msg) {
+  return `<div class="empty"><span class="ei">${icon}</span><h3>${title}</h3><p>${msg}</p></div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+// DATE HELPERS
+// ─────────────────────────────────────────────────────────
+function relTime(iso) {
+  try {
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60)        return 'just now';
+    if (diff < 3600)      return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400)     return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 86400 * 7) return Math.floor(diff / 86400) + 'd ago';
+    return fmtDate(iso);
+  } catch { return '—'; }
+}
+
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  } catch { return iso || '—'; }
+}
+
+// ─────────────────────────────────────────────────────────
+// UTILITY HELPERS
+// ─────────────────────────────────────────────────────────
+function id(s) { return document.getElementById(s); }
+
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+/** Returns true if val is a real value (including 0) — not empty/null/undefined */
+function hasVal(val) {
+  return val !== null && val !== undefined && val !== '';
+}
+
+function clearFields(ids) {
+  ids.forEach(i => { const el = id(i); if (el) el.value = ''; });
+}
+</script>
+</body>
+</html>
